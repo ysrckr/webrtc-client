@@ -3,7 +3,7 @@ import './App.css';
 import { useEffect, useRef, useState } from 'react';
 
 function App() {
-  const socket = new WebSocket('wss://127.0.0.1:8000/api/v1/peer');
+  const socket = new WebSocket('wss://127.0.0.1:8000/api/v1/peers');
   const [params, setParams] = useState<{
     video: MediaStreamTrack | null;
     audio: MediaStreamTrack | null;
@@ -55,8 +55,8 @@ function App() {
 
   useEffect(() => {
     socket.onopen = () => {
-      console.info('`connection Open');
-      socket.send(JSON.stringify({ message: 'hello' }));
+      console.info('Connection Open');
+      socket.send(JSON.stringify({ room: 'test', peer: 'test' }));
     };
 
     socket.onerror = error => {
