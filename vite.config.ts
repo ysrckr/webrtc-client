@@ -6,12 +6,6 @@ import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
   plugins: [react(), mkcert()],
   server: {
-    proxy: {
-      '/v1': {
-        target: 'https://127.0.0.1:8000',
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/v1/, '/api/v1'),
-      },
-    },
+    port: 3000,
   },
 });
