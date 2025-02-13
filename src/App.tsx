@@ -16,6 +16,7 @@ import { useRef } from 'react';
 function App() {
   const webcamVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
+  const remoteAudio = useRef<HTMLAudioElement>(null);
 
   const device = new Device();
   let producerTransport: Transport<AppData>;
@@ -91,7 +92,6 @@ function App() {
 
   const createDevice = async () => {
     try {
-
       await device.load({
         routerRtpCapabilities: rtpCapabilities,
       });
@@ -127,8 +127,6 @@ function App() {
         }
 
         producerTransport = device.createSendTransport(params);
-
-        console.log(producerTransport);
 
         producerTransport.on(
           'connect',
@@ -201,17 +199,14 @@ function App() {
   };
 
   const createRecvTransport = async () => {
-    console.log(SocketIO.TransportRCVConnect);
     await socket.emit(
       SocketIO.CreateWebRtcTransport,
       { sender: false },
       ({ params }: { params: any }) => {
         if (params.error) {
-          console.log(params.error);
+          console.error(params.error);
           return;
         }
-
-        console.log(params);
 
         consumerTransport = device.createRecvTransport(params);
 
@@ -240,31 +235,45 @@ function App() {
         rtpCapabilities: device.rtpCapabilities,
       },
       async ({ params }: { params: any }) => {
-        if (params.error) {
+        console.log(params);
+        if (params?.error) {
           console.log('Cannot Consume');
           return;
         }
 
-        console.log('params', params);
         // then consume with the local consumer transport
         // which creates a consumer
-        consumer = await consumerTransport.consume({
-          id: params.id,
-          producerId: params.producerId,
-          kind: params.kind,
-          rtpParameters: params.rtpParameters,
-        });
-
-        if (params.kind === 'audio') {
-          console.log('audiooooo');
+        try {
+          consumer = await consumerTransport.consume({
+            id: params.id,
+            producerId: params.producerId,
+            kind: params.kind,
+            rtpParameters: params.rtpParameters,
+          });
+        } catch (error) {
+          console.log(error);
         }
 
-        // destructure and retrieve the video track from the producer
-        console.log('CONSUMER', consumer);
-        const { track } = consumer;
+        if (!consumer) {
+          console.log('Consumer not created');
+          return;
+        }
 
-        if (remoteVideo?.current) {
-          remoteVideo.current.srcObject = new MediaStream([track]);
+        const videoMediaStream = new MediaStream();
+        const audioMediaStream = new MediaStream();
+
+        if (consumer.kind === 'video') {
+          videoMediaStream.addTrack(consumer.track);
+        } else {
+          audioMediaStream.addTrack(consumer.track);
+        }
+
+        if (remoteVideo.current) {
+          remoteVideo.current.srcObject = videoMediaStream;
+        }
+
+        if (remoteAudio.current) {
+          remoteAudio.current.srcObject = audioMediaStream;
         }
 
         // the server consumer started with media paused
@@ -316,6 +325,7 @@ function App() {
       </div>
       <div>
         <video ref={remoteVideo} autoPlay playsInline></video>
+        <audio ref={remoteAudio} autoPlay playsInline></audio>
       </div>
     </main>
   );
