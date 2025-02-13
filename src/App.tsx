@@ -91,6 +91,7 @@ function App() {
 
   const createDevice = async () => {
     try {
+
       await device.load({
         routerRtpCapabilities: rtpCapabilities,
       });
@@ -254,8 +255,12 @@ function App() {
           rtpParameters: params.rtpParameters,
         });
 
+        if (params.kind === 'audio') {
+          console.log('audiooooo');
+        }
+
         // destructure and retrieve the video track from the producer
-        console.log(consumer);
+        console.log('CONSUMER', consumer);
         const { track } = consumer;
 
         if (remoteVideo?.current) {
