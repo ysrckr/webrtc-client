@@ -290,7 +290,7 @@ function App() {
   return (
     <main>
       <div>
-        <video ref={webcamVideo} autoPlay playsInline></video>
+        <video ref={webcamVideo} autoPlay playsInline muted></video>
         <button type="button" onClick={getLocalStream}>
           Open Camera and Mic
         </button>
