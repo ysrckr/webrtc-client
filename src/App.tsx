@@ -234,51 +234,55 @@ function App() {
       {
         rtpCapabilities: device.rtpCapabilities,
       },
-      async ({ params }: { params: any }) => {
+      async ({ params }: { params: any[] }) => {
         console.log(params);
-        if (params?.error) {
-          console.log('Cannot Consume');
-          return;
-        }
+        params?.forEach(async (param: any) => {
+          if (param?.error) {
+            console.log('Cannot Consume');
+            return;
+          }
 
-        // then consume with the local consumer transport
-        // which creates a consumer
-        try {
-          consumer = await consumerTransport.consume({
-            id: params.id,
-            producerId: params.producerId,
-            kind: params.kind,
-            rtpParameters: params.rtpParameters,
-          });
-        } catch (error) {
-          console.log(error);
-        }
+          console.log(param);
 
-        if (!consumer) {
-          console.log('Consumer not created');
-          return;
-        }
+          // then consume with the local consumer transport
+          // which creates a consumer
+          try {
+            consumer = await consumerTransport.consume({
+              id: param.id,
+              producerId: param.producerId,
+              kind: param.kind,
+              rtpParameters: param.rtpParameters,
+            });
+          } catch (error) {
+            console.log(error);
+          }
 
-        const videoMediaStream = new MediaStream();
-        const audioMediaStream = new MediaStream();
+          if (!consumer) {
+            console.log('Consumer not created');
+            return;
+          }
 
-        if (consumer.kind === 'video') {
-          videoMediaStream.addTrack(consumer.track);
-        } else {
-          audioMediaStream.addTrack(consumer.track);
-        }
+          const videoMediaStream = new MediaStream();
+          const audioMediaStream = new MediaStream();
 
-        if (remoteVideo.current) {
-          remoteVideo.current.srcObject = videoMediaStream;
-        }
+          if (consumer.kind === 'video') {
+            videoMediaStream.addTrack(consumer.track);
+          } else {
+            audioMediaStream.addTrack(consumer.track);
+          }
 
-        if (remoteAudio.current) {
-          remoteAudio.current.srcObject = audioMediaStream;
-        }
+          if (remoteVideo.current) {
+            remoteVideo.current.srcObject = videoMediaStream;
+          }
 
-        // the server consumer started with media paused
-        // so we need to inform the server to resume
-        socket.emit(SocketIO.ResumeConsumer);
+          if (remoteAudio.current) {
+            remoteAudio.current.srcObject = audioMediaStream;
+          }
+
+          // the server consumer started with media paused
+          // so we need to inform the server to resume
+          socket.emit(SocketIO.ResumeConsumer);
+        });
       },
     );
   };
